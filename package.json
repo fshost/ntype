@@ -1,0 +1,32 @@
+{
+  "name": "ntype",
+  "version": "0.0.1",
+  "description": "defining interfaces for class structure and auto-type checking in javascript for Node.js",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tap": "~0.3.3"
+  },
+  "scripts": {
+    "test": "tap test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fshost/ntype.git"
+  },
+  "keywords": [
+    "node",
+    "interface",
+    "class",
+    "type",
+    "struct",
+    "type-checking",
+    "test",
+    "testing"
+  ],
+  "author": "Nathan Cartwright",
+  "license": "MIT"
+}
