@@ -87,7 +87,7 @@ Descriptor.prototype.checkType = function (value) {
         return value;
     }
     if (typeof requiredType === 'string') {
-        if (type(checkValue) === requiredType) {
+        if (type(checkValue) === requiredType || type(checkValue, true) === requiredType) {
             return value;
         }
         else {

@@ -79,37 +79,57 @@ test("Descriptor class", function (test) {
                     customClass: { Type: TestClass, value: testInst }
                 };
             
-            // check every native type against every other native type
-            // due to numeric relations to coerced true and false, and array indexes
-            // we will try -1, 0, and 1 for numbers
-            // similarly, we will check both true and false for booleans
-            for (var type in typeVals) {
-                if (typeVals.hasOwnProperty(type)) {
-                    for (var invalidType in typeVals) {
-                        if (typeVals.hasOwnProperty(invalidType) && invalidType !== type) {
-                            typeVal = typeVals[type];
-                            invalid = typeVals[invalidType].value;
-                            
-                            test.ok(tDesc(typeVal.Type, typeVal.value, invalid));
+            function testTypes(typeVals) {
+                // check every native type against every other native type
+                // due to numeric relations to coerced true and false, and array indexes
+                // we will try -1, 0, and 1 for numbers
+                // similarly, we will check both true and false for booleans
+                for (var type in typeVals) {
+                    if (typeVals.hasOwnProperty(type)) {
+                        for (var invalidType in typeVals) {
+                            if (typeVals.hasOwnProperty(invalidType) && invalidType !== type) {
+                                typeVal = typeVals[type];
+                                invalid = typeVals[invalidType].value;
 
-                            if (invalidType === 'num') {
-                                test.ok(tDesc(typeVal.Type, typeVal.value, 0));
-                                test.ok(tDesc(typeVal.Type, typeVal.value, 1));
-                            }
-                            else if (invalidType === 'bool') {
-                                test.ok(tDesc(typeVal.Type, typeVal.value, false));
-                            }
-                            if (type === 'num') {
-                                test.ok(tDesc(typeVal.Type, 0, invalid));
-                                test.ok(tDesc(typeVal.Type, 1, invalid));
-                            }
-                            else if (type === 'bool') {
-                                test.ok(tDesc(typeVal.Type, false, invalid));
+                                test.ok(tDesc(typeVal.Type, typeVal.value, invalid));
+
+                                if (invalidType === 'num') {
+                                    test.ok(tDesc(typeVal.Type, typeVal.value, 0));
+                                    test.ok(tDesc(typeVal.Type, typeVal.value, 1));
+                                }
+                                else if (invalidType === 'bool') {
+                                    test.ok(tDesc(typeVal.Type, typeVal.value, false));
+                                }
+                                if (type === 'num') {
+                                    test.ok(tDesc(typeVal.Type, 0, invalid));
+                                    test.ok(tDesc(typeVal.Type, 1, invalid));
+                                }
+                                else if (type === 'bool') {
+                                    test.ok(tDesc(typeVal.Type, false, invalid));
+                                }
                             }
                         }
                     }
                 }
             }
+            testTypes(typeVals);
+            test.test("including extended numeric types", function (test) {
+                typeVals = {
+                    int: { Type: 'integer', value: 99 },
+                    float: { Type: 'float', value: 7.62 },
+                    bool: { Type: Boolean, value: true },
+                    array: { Type: Array, value: [1, 2, 3] },
+                    date: { Type: Date, value: new Date('1-11-2011') },
+                    string: { Type: String, value: 'test string' },
+                    object: { Type: Object, value: {} },
+                    fn: { Type: Function, value: function test() { } },
+                    regex: { Type: RegExp, value: /[a-z]/ },
+                    customClass: { Type: TestClass, value: testInst }
+                };
+                testTypes(typeVals);
+                test.end();
+            });
+
             test.end();
         });
 
