@@ -1,6 +1,6 @@
 {
   "name": "ntype",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "description": "defining interfaces for class structure and auto-type checking in javascript for Node.js",
   "main": "index.js",
   "directories": {

@@ -77,34 +77,8 @@ test("The classify method", function (test) {
             this.text = text;
         });
         test.ok(Link);
-        test.test("will apply instances created from the class against the interface", function (test) {
-            
-            test.test("comparing specified types", function (test) {
-                var link = new Link('google.com');
-                test.equal(link.url, 'google.com');
-
-                test.test("adding default values", function (test) {
-                    test.equal(link.text, 'link');
-                    test.end();
-                });
-
-                test.test("throwing errors for invalid types", function (test) {
-                    test.throws(function () {
-                        var link = new Link(27);
-                    });
-                    test.end();
-                });
-
-                test.test("and throwing errors for missing required values", function (test) {
-                    test.throws(function () {
-                        var link = new Link();
-                    });
-                    test.end();
-                });
-
-            });
-            test.end();
-        });
+        
+        //testLink(test, Link, 'google.com');
         test.end();
     });
 
@@ -133,5 +107,140 @@ test("The classify method", function (test) {
         test.end()
     });
 
+    test.test("classes defined with options", function (test) {
+        var ILink = new Interface({ required: true }, {
+            url: { type: String, required: true },
+            text: { type: String, default: 'link' }
+        });
+        var Link = classify(ILink, function Link(url, text) {
+            this.url = url;
+            this.text = text;
+        });
+        test.ok(Link);
+        testLink(test, Link, 'google.com');
+
+        test.end()
+    });
+    test.test("classes defined with propagate option", function (test) {
+        var ILink = new Interface({ required: true }, {
+            url: { type: String, required: true },
+            text: { type: String, default: 'link' }
+        });
+        var Link = classify({ interface: ILink, propagate: true }, function Link(args) {
+        });
+        test.ok(Link);
+        testLink(test, Link, { url: 'google.com' });
+
+        test.end()
+    });
+    test.test("classes defined with validateInstance:false option", function (test) {
+        var ILink = new Interface({ required: true }, {
+            url: { type: String, required: true },
+            text: { type: String, default: 'link' }
+        });
+        var Link = classify({ interface: ILink, validateInstance: false }, function Link(args) {
+
+        });
+        test.ok(Link);
+        test.ok(new Link({}));
+
+
+        test.end()
+    });
+    test.test("classes defined with validateArgs option", function (test) {
+        var ILink = new Interface({ required: true }, {
+            url: String,
+            text: { type: String, required: true, default: 'link' }
+        });
+        var Link = classify({
+                interface: ILink,
+                validateArgs: true
+            }, function Link(args) {
+                this.text = args.text;
+            });
+        test.ok(Link);
+        // should pass even though there is nothing set on the instance
+        var link = new Link({ url: 'google.com' })
+        test.ok(link);
+        test.equal(link.url, undefined);
+        test.equal(link.text, 'link');
+        test.end()
+    });
+    test.test("classes defined with validateArgs and validateInstance option", function (test) {
+        var ILink = new Interface({ required: true }, {
+            url: { type: String, required: true },
+            text: { type: String, required: true, default: 'link' }
+        });
+        var Link = classify({
+            interface: ILink,
+            validateArgs: true,
+            validateInstance: true
+        }, function Link(args) {
+            this.url = args.url;
+            this.text = args.text;
+        });
+        test.ok(Link);
+        testLink(test, Link, { url: 'google.com' });  
+    });
+
+    test.test("classes defined with validateArgs and validateInstance option", function (test) {
+        var ILink = new Interface({ required: true }, {
+            url: { type: String, required: true },
+            text: { type: String, required: true, default: 'link' }
+        });
+        var Link = classify({
+            interface: ILink,
+            propagate: true,
+            validateInstance: true
+        }, function Link(args) {});
+        test.ok(Link);
+        testLink(test, Link, { url: 'google.com' });
+    });
+    test.test("classes defined with no constructor", function (test) {
+        var ILink = new Interface({ required: true }, {
+            url: { type: String, required: true },
+            text: { type: String, required: true, default: 'link' }
+        });
+        var Link = classify({
+            interface: ILink
+        });
+        test.ok(Link);
+        // as there is no constructor, an anonymous one will be created, and options will by default
+        // be set to propagate from arguments 0 to the instance
+        testLink(test, Link, { url: 'google.com' });
+    });
     test.end();
+
+
 });
+
+function testLink(test, Link, args) {
+    test.test("will apply instances created from the class against the interface", function (test) {
+
+        test.test("comparing specified types", function (test) {
+            var link = new Link(args);
+            test.equal(link.url, 'google.com');
+
+            test.test("adding default values", function (test) {
+                test.equal(link.text, 'link');
+                test.end();
+            });
+
+            test.test("throwing errors for invalid types", function (test) {
+                test.throws(function () {
+                    var link = new Link(27);
+                });
+                test.end();
+            });
+
+            test.test("and throwing errors for missing required values", function (test) {
+                test.throws(function () {
+                    var link = new Link();
+                });
+                test.end();
+            });
+
+        });
+        test.end();
+    });
+}

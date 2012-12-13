@@ -23,7 +23,7 @@ test("ntype module", function (test) {
         test.ok(type);
         test.equal(type(undefined), 'undefined');
         test.equal(type(null), 'null');
-        test.equal(type(NaN), 'NaN');
+        test.equal(type(NaN), 'nan');
         test.equal(type('test string'), 'string');
         test.equal(type(new Date('1-1-2011')), 'date');
         test.equal(type(function test() { }), 'function');

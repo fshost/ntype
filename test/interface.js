@@ -77,6 +77,27 @@ test("Interface class", function (test) {
         });
         test.end();
     });
+
+    test.test("validation for interface types", function (test) {
+        
+        var ISubTest = new Interface({
+                name: { type: String, default: 'name' },
+                age: { type: Number, required: true }
+            }),
+            ITest = new Interface({ required: true }, {
+                property1: String,
+                property2: ISubTest
+            });
+            ITest.validate({ property1: 'jane', property2: { age: 27 }})
+            test.throws(function () {
+                ITest.validate({ property1: 'jane', property2: 27 });
+            });
+            test.throws(function () {
+                ITest.validate({ property1: 'jane' })
+            });
+            test.end();
+    });
+
     test.test("can require properties that do not have a specified type, or 'any' type", function (test) {
         ITest = new Interface({
             property1: { required: true },

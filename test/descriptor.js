@@ -3,7 +3,10 @@
 */
 // test using node-tap
 var test = require('tap').test,
-    ntype = require('..');
+    ntype = require('..'),
+    Interface = ntype.Interface;
+
+function TestClass() { }
 
 test("Descriptor class", function (test) {
 
@@ -51,6 +54,7 @@ test("Descriptor class", function (test) {
     test.test("getSetValue method should return on object that has the descriptor applied", function (test) {
 
         function tDesc(Type, value, invalid, next) {
+
             var eObj,
                 obj = { property1: value },
                 descriptor = new Descriptor({ name: 'property1', type: Type });
@@ -58,12 +62,32 @@ test("Descriptor class", function (test) {
             test.deepEqual(descriptor.getSetValue(obj), eObj);
             test.strictEqual(descriptor.getSetValue(obj), obj);
 
-            if (!next) return tDesc([Type], [value], [invalid], true);
+            if (!next) {
+                var arrayVal = [value],
+                    arrayInval = [invalid],
+                    arrayType = [Type];
+                return tDesc(arrayType, arrayVal, arrayInval, true);
+            }
             else return true;
+            return true;
+
         }
 
         test.test("should distinguish all types properly", function (test) {
-            function TestClass() { }
+            test.test("including the interface type", function (test) {
+                var ITest = new Interface({ name: String, age: Number }),
+                    descriptor = new Descriptor({ name: 'property1', type: ITest }),
+                    obj = {
+                        name: 'jane',
+                        age: 27
+                    };
+                test.strictEqual(descriptor.type, ITest);
+                test.ok(ITest instanceof Interface);
+                test.ok(descriptor.type instanceof Interface);
+                test.end();
+            });
+
+
             var typeVal,
                 invalid,
                 testInst = new TestClass(),
