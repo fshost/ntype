@@ -1,4 +1,6 @@
-﻿var path = require('path'),
+﻿var ntools = require('ntools'),
+    setDefaults = ntools.setDefaults,
+    clone = ntools.clone,
     lib = require('../lib'),
     Type = lib.Type,
     type = lib.type,
@@ -17,7 +19,7 @@ function Descriptor(attributes) {
         cur = 'descriptor: attributes argument: ',
 
         err = function (msg) {
-            throw new TypeError(cur + message);
+            throw new TypeError(cur + msg);
         },
         getType = function (value) {
             if (typeof value === 'string')
@@ -28,7 +30,7 @@ function Descriptor(attributes) {
                 if (Type[value]) return Type[value];
                 else {
                     instance.isClassType = true;
-                    instance.className = value.name || 'required class';
+                    instance.className = value.name && value.name !== 'ClassWrapper' ? value.name : 'required class';
                     return value;
                 }
             }
@@ -53,6 +55,9 @@ function Descriptor(attributes) {
             err('invalid type');
         };
     
+    getType = getType.bind(this);
+    getTypeArray = getTypeArray.bind(this);
+
     if (typeof attributes !== 'object') err('missing or invalid');
 
     if (attributes.name === undefined)
@@ -71,7 +76,7 @@ function Descriptor(attributes) {
     }
 
     return instance;
-};
+}
 
 Descriptor.prototype.getSetValue = function (o) {
 
@@ -90,12 +95,11 @@ Descriptor.prototype.getSetValue = function (o) {
         return o;
     }
     if (hasValue(value)) {
-        if (this.validate && !this.validate(value, this)) {
+        if (this.validator && !this.validator(value, this)) {
             this.error(value + ' failed validation');
         }
         if (this.type !== undefined && this.type !== 'any') {
             if (this.isTypeArray) {
-                var valid = true;
                 for (var i = 0, l = value.length; i < l; i++) {
                     if (this.isInterfaceType) {
                         o[this.name][i] = this.type.validate(value[i]);
@@ -118,7 +122,7 @@ Descriptor.prototype.getDescription = function () {
 
 Descriptor.prototype.error = function (errMsg) {
     errMsg = this.getDescription() + ': ' + errMsg;
-    throw new TypeError(errMsg)
+    throw new TypeError(errMsg);
 };
 
 Descriptor.prototype.checkType = function (value) {
@@ -170,7 +174,7 @@ function Interface(options, descriptors) {
     if (hasValue(options)) {
         if (type(options) === 'object') {
             defaults.required = opt('required', 'boolean');
-            if (opt('validate', 'function')) defaults.validate = options.validate;
+            if (opt('validator', 'function')) defaults.validator = options.validator;
         }
         else throw new TypeError(current + 'options: must be of type [object]');
     }
@@ -182,13 +186,14 @@ function Interface(options, descriptors) {
         descriptors = this.toDescriptors(descriptors, defaults);
     }
     if (options && options.extends instanceof Interface) {
-        descriptors = this.extendDescriptors(descriptors, options.extends);
+        descriptors = this.extendDescriptors(descriptors, options.extends.descriptors);
     }
     if (!descriptors.length)
         throw new TypeError(current + 'contains no values');
     else if (!(descriptors[0] instanceof Descriptor)) {
         throw new TypeError(current + 'must be instances of Descriptor class');
     }
+    var instance = this;
     this.descriptors = descriptors;
 
 }
@@ -220,39 +225,60 @@ Interface.prototype._throw = function (errMsg, stackLevel) {
 };
 
 // method to extend descriptors with that of a parent interface
-Interface.prototype.extendDescriptors = function (descriptors, IParent) {
-    var index,
-        cur = 'Interface.extends';
+Interface.prototype.extendDescriptors = function (descriptors, parentDescriptors) {
     if (!Array.isArray(descriptors)) {
         throw new TypeError('Interface.extendDescriptors: descriptors argument must be an array');
     }
-    if (!(IParent instanceof Interface)) {
-        throw new TypeError('Interface.extendDescriptors: IParent argument must be an array');
+    if (!Array.isArray(parentDescriptors)) {
+        throw new TypeError('Interface.extendDescriptors: parentDescriptors argument must be an array');
     }
-    var indexedDesc = descriptors.map(function (val) { return val.name });
-    for (var i = 0, descr; descr = IParent.descriptors[i]; i++) {
-        var index = indexedDesc.indexOf(descr.name);
-        if (index > -1) {
-            for (var key in descr) {
-                if (descr.hasOwnProperty(key)) {
-                    if (descriptors[index][key] === undefined) {
-                        descriptors[index][key] = descr[key];
+    if (parentDescriptors.length < 1) return descriptors;
+    if (descriptors.length < 1)
+        throw new TypeError('Interface.extendDescriptors: descriptors must have at least one element');
+
+    var descIndex = [],
+        addDescr = [];
+    for (var i = 0, descriptor; descriptor = descriptors[i]; i++) {
+        if (descriptor instanceof Descriptor) {
+            descIndex[i] = descriptor.name;
+        }
+        else throw new TypeError('descriptor is not an instance of the Descriptor class');
+    }
+    for (var index, descrType, j = 0, parentDescr; parentDescr = parentDescriptors[j]; j++) {
+        index = descIndex.indexOf(parentDescr.name);
+        if (parentDescr instanceof Descriptor) {
+            if (index > -1) {
+                for (var key in parentDescr) {
+                    if (parentDescr.hasOwnProperty(key)) {
+                        if (descriptors[index][key] === undefined) {
+                            descriptors[index][key] = parentDescr[key];
+                        }
+                        else if (typeof descriptors[index][key] === 'object' &&
+                            typeof parentDescr[key] === 'object') {
+                            if (!parentDescr[key] instanceof Interface && descriptors[index][key] instanceof Interface) {
+                                    descriptors[index][key].descriptors = this.extendDescriptors(descriptors[index][key].descriptors, parentDescr[key].descriptors);
+                            }
+                        }
+
                     }
                 }
+                if (!(descriptors[index] instanceof Descriptor)) {
+                    throw new TypeError('descriptor is not an instance of the Descriptor class');
+                }
             }
+            else addDescr.push(parentDescr);
         }
-        else {
-            descriptors.unshift(descr);
-        }
+        else throw new TypeError('parent descriptor is not an instance of the Descriptor class');
     }
+    if (addDescr.length > 0) descriptors = addDescr.concat(descriptors);
+    
     return descriptors;
 };
 
 // convert object to array of descriptors with key as name property
 Interface.prototype.toDescriptors = function (o, defaults) {
 
-    var name,
-        value,
+    var value,
         newValue,
         descriptor,
         descriptors = [],
@@ -260,7 +286,7 @@ Interface.prototype.toDescriptors = function (o, defaults) {
         cur = 'Interface.toDescriptors: arguments: ',
 
         err = function (msg) {
-            throw new TypeError(cur + message);
+            throw new TypeError(cur + msg);
         },
         getType = function (value) {
             if (typeof value === 'string')
@@ -287,7 +313,7 @@ Interface.prototype.toDescriptors = function (o, defaults) {
             if (type) {
                 return [type];
             }
-            err('invalid type');
+            err(value + ' is invalid type for ' + typeArray + ' : ' + value[0] + ' : ' + type);
         };
 
     for (var key in o) {
@@ -317,7 +343,6 @@ Interface.prototype.toDescriptors = function (o, defaults) {
                     }
                 }
             }
-            newValue.interface = this;
             descriptor = new Descriptor(newValue);
             descriptors.push(descriptor);
         }

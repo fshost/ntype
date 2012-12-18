@@ -104,7 +104,7 @@ test("The classify method", function (test) {
             test.end();
         });
 
-        test.end()
+        test.end();
     });
 
     test.test("classes defined with options", function (test) {
@@ -141,7 +141,7 @@ test("The classify method", function (test) {
         var Link = classify({ interface: ILink, validateInstance: false }, function Link(args) {
 
         });
-        test.ok(Link);
+        //test.ok(Link);
         test.ok(new Link({}));
 
 
@@ -208,7 +208,8 @@ test("The classify method", function (test) {
         // as there is no constructor, an anonymous one will be created, and options will by default
         // be set to propagate from arguments 0 to the instance
         testLink(test, Link, { url: 'google.com' });
-    });
+        });
+
     test.end();
 
 

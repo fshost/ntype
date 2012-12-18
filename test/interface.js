@@ -23,7 +23,7 @@ test("Interface class", function (test) {
             new Interface({ required: 'false' }, { url: String });
         });
         test.throws(function () {
-            new Interface({ validate: true }, { url: String });
+            new Interface({ validator: true }, { url: String });
         });
         test.throws(function () {
             new Interface({}, {});
@@ -114,25 +114,25 @@ test("Interface class", function (test) {
     });
 
     test.test("validate option can specify validator for the interface", function (test) {
-        var validate = function validate (value, descriptor) {
+        var validator = function validator(value, descriptor) {
             return descriptor.name === 'property1' || descriptor.name === 'property2';
         };
         ITest = new Interface({
-            validate: validate
+            validator: validator
         }, {
             property1: String,
             property2: Number
         });
         test.test("validate option propagates to all descriptors", function (test) {
-            test.strictEqual(ITest.descriptors[0].validate, validate);
-            test.strictEqual(ITest.descriptors[1].validate, validate);
+            test.strictEqual(ITest.descriptors[0].validator, validator);
+            test.strictEqual(ITest.descriptors[1].validator, validator);
             test.end();
         });
         ITest.validate({ property1: 'jane' });
         // ensure the descriptors share the same validate method if passed as global option
         test.strictEqual(ITest.descriptors[0].validate, ITest.descriptors[1].validate);
         test.ok(ITest = new Interface({
-            validate: validate
+            validator: validator
         }, {
             property1: String,
             property2: Number,
@@ -170,12 +170,17 @@ test("Interface class", function (test) {
             url: String,
             text: String
         });
+        // original interface should be as defined
+        test.equal(ILink.descriptors.length, 2);
+        test.equal(ILink.descriptors[0].name, 'url');
+        test.equal(ILink.descriptors[1].name, 'text');
         var IPicLink = new Interface({ extends: ILink }, {
             text: { required: false },
             imgUrl: { type: String, required: true }
         });
         test.ok(IPicLink);
         // original interface should not be modified
+        test.equal(ILink.descriptors.length, 2);
         test.equal(ILink.descriptors[0].name, 'url');
         test.equal(ILink.descriptors[1].name, 'text');
         test.equal(ILink.descriptors[0].type, 'string');
