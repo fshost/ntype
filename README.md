@@ -48,13 +48,16 @@ example usage:
  the primary method exposed by the library for external use, simply defines classes if passed a constructor that can implement interfaces by adding properties to the Class constructor instance (not the class instance or prototype, so they will not affect your class instances themselves) and checking the value returned by  the constructor against implemented interface(s).  Interfaces can be implemented upon class definition or later using the implements method.
 
 ###### arguments
+
 - interface - optional, if specified, the defined class will implement the interface
 - constructor - the class constructor function
 
 ###### example usage:
+
     var Link = classify(function Link(link, text) { this.link = link; this.text = text; });
     Link.implements(ILink);
     var Link = ntype.classify(ILink, function Link(link, text) { this.link = link; this.text = text; });
+    
 (see tests for more examples)
    
 ntype expose a few additional methods and properties used internally as they may be generally useful:

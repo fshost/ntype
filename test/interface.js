@@ -1,17 +1,17 @@
 ﻿/***
-* Test Interface ntype
+* Test Schema ntype
 */
 // test using node-tap
 var test = require('tap').test,
-    ntype = require('..'),
+    ntype = require(__dirname + '/..'),
     Descriptor = ntype.Descriptor,
-    Interface = ntype.Interface
+    Schema = ntype.Schema;
 
-test("Interface class", function (test) {
+test("Schema class", function (test) {
 
-    test.ok(Interface);
+    test.ok(Schema);
 
-    var ITest = new Interface({
+    var ITest = new Schema({
         property1: String,
         property2: Number
     });
@@ -20,18 +20,18 @@ test("Interface class", function (test) {
     test.ok(ITest.descriptors[0] instanceof Descriptor);
     test.test("constructor should be strict in regards to types", function (test) {
         test.throws(function () {
-            new Interface({ required: 'false' }, { url: String });
+            new Schema({ required: 'false' }, { url: String });
         });
         test.throws(function () {
-            new Interface({ validator: true }, { url: String });
+            new Schema({ validator: true }, { url: String });
         });
         test.throws(function () {
-            new Interface({}, {});
+            new Schema({}, {});
         });
         test.end();
     });
     test.test("required option propagates to all descriptors", function (test) {
-        ITest = new Interface({ required: true }, {
+        ITest = new Schema({ required: true }, {
             property1: String,
             property2: Number
         });
@@ -55,9 +55,9 @@ test("Interface class", function (test) {
             ITest.validate({ property1: 'jane', property2: 'doe' });
         });
         test.test("should be able to specify class constructor as a type, as well as Date and RegExp", function (test) {
-            function TestClass() { };
-            var testInstance = new TestClass;
-            ITest = new Interface({ required: true }, {
+            function TestClass() { }
+            var testInstance = new TestClass();
+            ITest = new Schema({ required: true }, {
                 property1: Function,
                 property2: Date,
                 property3: RegExp,
@@ -78,28 +78,28 @@ test("Interface class", function (test) {
         test.end();
     });
 
-    test.test("validation for interface types", function (test) {
-        
-        var ISubTest = new Interface({
-                name: { type: String, default: 'name' },
+    test.test("validation for schema types", function (test) {
+
+        var ISubTest = new Schema({
+                name: { type: String, value: 'name' },
                 age: { type: Number, required: true }
             }),
-            ITest = new Interface({ required: true }, {
+            ITest = new Schema({ required: true }, {
                 property1: String,
                 property2: ISubTest
             });
-            ITest.validate({ property1: 'jane', property2: { age: 27 }})
+            ITest.validate({ property1: 'jane', property2: { age: 27 }});
             test.throws(function () {
                 ITest.validate({ property1: 'jane', property2: 27 });
             });
             test.throws(function () {
-                ITest.validate({ property1: 'jane' })
+                ITest.validate({ property1: 'jane' });
             });
             test.end();
     });
 
     test.test("can require properties that do not have a specified type, or 'any' type", function (test) {
-        ITest = new Interface({
+        ITest = new Schema({
             property1: { required: true },
             property2: String,
             property3: 'any'
@@ -113,11 +113,11 @@ test("Interface class", function (test) {
         test.end();
     });
 
-    test.test("validate option can specify validator for the interface", function (test) {
+    test.test("validate option can specify validator for the schema", function (test) {
         var validator = function validator(value, descriptor) {
             return descriptor.name === 'property1' || descriptor.name === 'property2';
         };
-        ITest = new Interface({
+        ITest = new Schema({
             validator: validator
         }, {
             property1: String,
@@ -131,7 +131,7 @@ test("Interface class", function (test) {
         ITest.validate({ property1: 'jane' });
         // ensure the descriptors share the same validate method if passed as global option
         test.strictEqual(ITest.descriptors[0].validate, ITest.descriptors[1].validate);
-        test.ok(ITest = new Interface({
+        test.ok(ITest = new Schema({
             validator: validator
         }, {
             property1: String,
@@ -142,44 +142,44 @@ test("Interface class", function (test) {
         test.throws(function () {
             ITest.validate({ property1: 'jane', property2: 27, property3: 'not allowed' });
         });
-        // properties not defined by the interface should not be tested by the interface
+        // properties not defined by the schema should not be tested by the schema
         test.ok(ITest.validate({ property1: 'jane', property2: 27, property4: 'doe' }));
         test.end();
     });
-    test.test("interfaces can extend parent interfaces", function (test) {
-        test.ok(ITest = new Interface({
+    test.test("schemas can extend parent schemas", function (test) {
+        test.ok(ITest = new Schema({
             required: true
         }, {
             property1: String,
             property2: Number
         }));
-        var ITest2 = new Interface({ extends: ITest }, {
+        var ITest2 = new Schema({ extends: ITest }, {
             property2: { required: false },
             property3: Function
         });
         // should extend by name, so existing should merge
         test.equal(ITest2.descriptors.length, 3);
         test.strictEqual(ITest2.descriptors[0].required, true);
-        // parent defaults should be overwritten
+        // parent values should be overwritten
         test.strictEqual(ITest2.descriptors[1].required, false);
         test.ok(!ITest2.descriptors[2].required);
         test.end();
     });
-    test.test("interfaces can extend other interfaces", function (test) {
-        var ILink = new Interface({ required: true }, {
+    test.test("schemas can extend other schemas", function (test) {
+        var ILink = new Schema({ required: true }, {
             url: String,
             text: String
         });
-        // original interface should be as defined
+        // original schema should be as defined
         test.equal(ILink.descriptors.length, 2);
         test.equal(ILink.descriptors[0].name, 'url');
         test.equal(ILink.descriptors[1].name, 'text');
-        var IPicLink = new Interface({ extends: ILink }, {
+        var IPicLink = new Schema({ extends: ILink }, {
             text: { required: false },
             imgUrl: { type: String, required: true }
         });
         test.ok(IPicLink);
-        // original interface should not be modified
+        // original schema should not be modified
         test.equal(ILink.descriptors.length, 2);
         test.equal(ILink.descriptors[0].name, 'url');
         test.equal(ILink.descriptors[1].name, 'text');
@@ -188,7 +188,7 @@ test("Interface class", function (test) {
         test.equal(ILink.descriptors[0].required, true);
         test.equal(ILink.descriptors[1].required, true);
 
-        // extended interface should include parent descriptors
+        // extended schema should include parent descriptors
         test.equal(IPicLink.descriptors[0].name, 'url');
         test.equal(IPicLink.descriptors[1].name, 'text');
         // and child descriptors
@@ -197,5 +197,5 @@ test("Interface class", function (test) {
         test.equal(IPicLink.descriptors[1].required, false);
         test.end();
     });
-    test.end()
+    test.end();
 });

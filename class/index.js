@@ -34,8 +34,8 @@ function Descriptor(attributes) {
                     return value;
                 }
             }
-            if (value instanceof Interface) {
-                instance.isInterfaceType = true;
+            if (value instanceof Schema) {
+                instance.isSchemaType = true;
                 return value;
             }
             return false;
@@ -85,12 +85,12 @@ Descriptor.prototype.getSetValue = function (o) {
         throw new TypeError('Descriptor: ' + this.name + ': cannot evaluate, object is ' + o);
     }
 
-    if (o[this.name] === undefined && this.default !== undefined) {
-        o[this.name] = this.default;
+    if (o[this.name] === undefined && this.value !== undefined) {
+        o[this.name] = this.value;
     }
     
     var value = o[this.name];
-    if (this.isInterfaceType && !this.isTypeArray) {
+    if (this.isSchemaType && !this.isTypeArray) {
         o[this.name] = this.type.validate(value);
         return o;
     }
@@ -101,7 +101,7 @@ Descriptor.prototype.getSetValue = function (o) {
         if (this.type !== undefined && this.type !== 'any') {
             if (this.isTypeArray) {
                 for (var i = 0, l = value.length; i < l; i++) {
-                    if (this.isInterfaceType) {
+                    if (this.isSchemaType) {
                         o[this.name][i] = this.type.validate(value[i]);
                     }
                     else this.checkType(value[i]);
@@ -132,7 +132,7 @@ Descriptor.prototype.checkType = function (value) {
         this.error(value + ' is not an instance of ' + this.className);
         return false;
     }
-    
+
     if (type(value) === this.type || type(value, true) === this.type) {
         return true;
     }
@@ -140,18 +140,18 @@ Descriptor.prototype.checkType = function (value) {
         this.error(value + 'is not of type [' + this.type + ']');
         return false;
     }
-    
+
 };
 
 exports.Descriptor = Descriptor;
 
 
 /*********************************
- * Interface Class
+ * Schema Class
  *
  * For defining expected property types and/or default values for properties
  ************************/
-function Interface(options, descriptors) {
+function Schema(options, descriptors) {
 
     if (!descriptors) {
         descriptors = options;
@@ -168,7 +168,7 @@ function Interface(options, descriptors) {
         else return false;
     }
 
-    var current = 'Interface: arguments: ',
+    var current = 'Schema: arguments: ',
         defaults = { required: false };
 
     if (hasValue(options)) {
@@ -185,7 +185,7 @@ function Interface(options, descriptors) {
     if (!Array.isArray(descriptors)) {
         descriptors = this.toDescriptors(descriptors, defaults);
     }
-    if (options && options.extends instanceof Interface) {
+    if (options && options.extends instanceof Schema) {
         descriptors = this.extendDescriptors(descriptors, options.extends.descriptors);
     }
     if (!descriptors.length)
@@ -198,8 +198,8 @@ function Interface(options, descriptors) {
 
 }
 
-// method to validate an instance against the interface
-Interface.prototype.validate = function (o) {
+// method to validate an instance against the schema
+Schema.prototype.validate = function (o) {
     if (o === undefined || o === null) o = {};
     for (var i = 0, descriptor; descriptor = this.descriptors[i]; i++) {
         o = descriptor.getSetValue(o);
@@ -208,12 +208,12 @@ Interface.prototype.validate = function (o) {
     return o;
 };
 
-Interface.prototype.getContextDescription = function (o) {
+Schema.prototype.getContextDescription = function (o) {
     return o.constructor && o.constructor.name || 'Class';
 };
 
-// throw interface typeError
-Interface.prototype._throw = function (errMsg, stackLevel) {
+// throw schema typeError
+Schema.prototype._throw = function (errMsg, stackLevel) {
     errMsg = this.getContextDescription + ': ' + errMsg;
     var stack,
         error = new TypeError(errMsg);
@@ -224,17 +224,17 @@ Interface.prototype._throw = function (errMsg, stackLevel) {
     throw error;
 };
 
-// method to extend descriptors with that of a parent interface
-Interface.prototype.extendDescriptors = function (descriptors, parentDescriptors) {
+// method to extend descriptors with that of a parent schema
+Schema.prototype.extendDescriptors = function (descriptors, parentDescriptors) {
     if (!Array.isArray(descriptors)) {
-        throw new TypeError('Interface.extendDescriptors: descriptors argument must be an array');
+        throw new TypeError('Schema.extendDescriptors: descriptors argument must be an array');
     }
     if (!Array.isArray(parentDescriptors)) {
-        throw new TypeError('Interface.extendDescriptors: parentDescriptors argument must be an array');
+        throw new TypeError('Schema.extendDescriptors: parentDescriptors argument must be an array');
     }
     if (parentDescriptors.length < 1) return descriptors;
     if (descriptors.length < 1)
-        throw new TypeError('Interface.extendDescriptors: descriptors must have at least one element');
+        throw new TypeError('Schema.extendDescriptors: descriptors must have at least one element');
 
     var descIndex = [],
         addDescr = [];
@@ -255,7 +255,7 @@ Interface.prototype.extendDescriptors = function (descriptors, parentDescriptors
                         }
                         else if (typeof descriptors[index][key] === 'object' &&
                             typeof parentDescr[key] === 'object') {
-                            if (!parentDescr[key] instanceof Interface && descriptors[index][key] instanceof Interface) {
+                            if (!parentDescr[key] instanceof Schema && descriptors[index][key] instanceof Schema) {
                                     descriptors[index][key].descriptors = this.extendDescriptors(descriptors[index][key].descriptors, parentDescr[key].descriptors);
                             }
                         }
@@ -276,14 +276,14 @@ Interface.prototype.extendDescriptors = function (descriptors, parentDescriptors
 };
 
 // convert object to array of descriptors with key as name property
-Interface.prototype.toDescriptors = function (o, defaults) {
+Schema.prototype.toDescriptors = function (o, defaults) {
 
     var value,
         newValue,
         descriptor,
         descriptors = [],
 
-        cur = 'Interface.toDescriptors: arguments: ',
+        cur = 'Schema.toDescriptors: arguments: ',
 
         err = function (msg) {
             throw new TypeError(cur + msg);
@@ -297,12 +297,12 @@ Interface.prototype.toDescriptors = function (o, defaults) {
                 if (Type[value]) return Type[value];
                 else return value;
             }
-            if (value instanceof Interface) {
+            if (value instanceof Schema) {
                 return value;
             }
             return false;
         },
-    
+
         getTypeArray = function (typeArray) {
             if (typeArray.length !== 1)
                 err('type array must contain exactly one element specifying type');
@@ -352,9 +352,9 @@ Interface.prototype.toDescriptors = function (o, defaults) {
 };
 
 
-exports.Interface = Interface;
-//// create interface for interface itself
-//var IInterface = new Interface({
+exports.Schema = Schema;
+//// create schema for schema itself
+//var ISchema = new Schema({
 //    propNames: [String],
 //    descriptors: [Object],
 //    attributes: [String],
@@ -366,7 +366,7 @@ exports.Interface = Interface;
 
 //var util = require('util'),
 //    classify = require('./classify'),
-//    _Interface = classify(IInterface, Interface);
+//    _Schema = classify(ISchema, Schema);
 
-//util.inherits(_Interface, Interface);
+//util.inherits(_Schema, Schema);
 

@@ -2,7 +2,7 @@
 * Test classify library methods
 */
 var test = require('tap').test,
-    ntype = require('..');
+    ntype = require(__dirname + '/..');
 
 test("ntype module", function (test) {
     test.test("Type", function (test) {

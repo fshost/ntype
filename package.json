@@ -1,12 +1,15 @@
 {
   "name": "ntype",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "defining interfaces for class structure and auto-type checking in javascript for Node.js",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "helpers": "0.0.5",
+    "ntools": "0.0.6"
+  },
   "devDependencies": {
     "tap": "~0.3.3"
   },

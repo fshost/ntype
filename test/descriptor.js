@@ -3,8 +3,8 @@
 */
 // test using node-tap
 var test = require('tap').test,
-    ntype = require('..'),
-    Interface = ntype.Interface;
+    ntype = require(__dirname + '/..'),
+    Schema = ntype.Schema;
 
 function TestClass() { }
 
@@ -39,9 +39,9 @@ test("Descriptor class", function (test) {
     test.deepEqual(descriptor.getSetValue(obj), obj);
     test.strictEqual(descriptor.getSetValue(obj), obj);
 
-    // test setting default
+    // test setting value
     obj = {};
-    descriptor = new Descriptor({ name: 'property1', type: String, default: 'Jane' });
+    descriptor = new Descriptor({ name: 'property1', type: String, value: 'Jane' });
     test.equal(descriptor.getSetValue(obj).property1, 'Jane');
 
     // test missing required
@@ -74,16 +74,16 @@ test("Descriptor class", function (test) {
         }
 
         test.test("should distinguish all types properly", function (test) {
-            test.test("including the interface type", function (test) {
-                var ITest = new Interface({ name: String, age: Number }),
+            test.test("including the schema type", function (test) {
+                var ITest = new Schema({ name: String, age: Number }),
                     descriptor = new Descriptor({ name: 'property1', type: ITest }),
                     obj = {
                         name: 'jane',
                         age: 27
                     };
                 test.strictEqual(descriptor.type, ITest);
-                test.ok(ITest instanceof Interface);
-                test.ok(descriptor.type instanceof Interface);
+                test.ok(ITest instanceof Schema);
+                test.ok(descriptor.type instanceof Schema);
                 test.end();
             });
 

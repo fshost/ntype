@@ -1,8 +1,8 @@
-﻿/***
+﻿var h = require('helpers')(__dirname, exports);
+/***
 * ntype - Run all tests
 */
-var path = require('path');
-require(path.join(__dirname, 'lib'));
-require(path.join(__dirname, 'descriptor'));
-require(path.join(__dirname, 'interface'));
-require(path.join(__dirname, 'classify'));
+h.require('lib');
+h.require('descriptor');
+h.require('interface');
+h.require('classify');
