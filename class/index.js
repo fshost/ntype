@@ -1,4 +1,7 @@
-﻿var ntools = require('ntools'),
+﻿/*jshint boss:true */
+/** @module class */
+
+var ntools = require('ntools'),
     setDefaults = ntools.setDefaults,
     clone = ntools.clone,
     lib = require('../lib'),
@@ -7,11 +10,10 @@
     hasValue = lib.hasValue;
 
 
-/*********************************
- * Descriptor Class
- *
- * For defining expected property type and/or default value for properties
- ************************/
+/**
+ * defines expected property type and/or default value for properties
+ * @constructor
+ */
 function Descriptor(attributes) {
 
     var instance = this,
@@ -54,7 +56,7 @@ function Descriptor(attributes) {
             }
             err('invalid type');
         };
-    
+
     getType = getType.bind(this);
     getTypeArray = getTypeArray.bind(this);
 
@@ -62,7 +64,7 @@ function Descriptor(attributes) {
 
     if (attributes.name === undefined)
         return err('missing required attribute: name');
-    
+
     // ensure name is first attribute
     instance.name = attributes.name;
     for (var attr in attributes) {
@@ -88,7 +90,7 @@ Descriptor.prototype.getSetValue = function (o) {
     if (o[this.name] === undefined && this.value !== undefined) {
         o[this.name] = this.value;
     }
-    
+
     var value = o[this.name];
     if (this.isSchemaType && !this.isTypeArray) {
         o[this.name] = this.type.validate(value);
@@ -146,11 +148,10 @@ Descriptor.prototype.checkType = function (value) {
 exports.Descriptor = Descriptor;
 
 
-/*********************************
- * Schema Class
- *
- * For defining expected property types and/or default values for properties
- ************************/
+/**
+ * define expected property types and/or default values for properties
+ * @constructor
+ */
 function Schema(options, descriptors) {
 
     if (!descriptors) {
@@ -271,7 +272,7 @@ Schema.prototype.extendDescriptors = function (descriptors, parentDescriptors) {
         else throw new TypeError('parent descriptor is not an instance of the Descriptor class');
     }
     if (addDescr.length > 0) descriptors = addDescr.concat(descriptors);
-    
+
     return descriptors;
 };
 
@@ -351,22 +352,4 @@ Schema.prototype.toDescriptors = function (o, defaults) {
 
 };
 
-
 exports.Schema = Schema;
-//// create schema for schema itself
-//var ISchema = new Schema({
-//    propNames: [String],
-//    descriptors: [Object],
-//    attributes: [String],
-//    hasValue: Function,
-//    Type: Object,
-//    Types: Array,
-//    validate: Function
-//});
-
-//var util = require('util'),
-//    classify = require('./classify'),
-//    _Schema = classify(ISchema, Schema);
-
-//util.inherits(_Schema, Schema);
-
