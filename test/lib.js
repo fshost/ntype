@@ -5,18 +5,6 @@ var test = require('tap').test,
     ntype = require(__dirname + '/..');
 
 test("ntype module", function (test) {
-    test.test("Type", function (test) {
-        test.ok(ntype.Type);
-        test.equal(ntype.Type[Object], 'object');
-        test.equal(ntype.Type[Array], 'array');
-        test.equal(ntype.Type[Date], 'date');
-        test.equal(ntype.Type[Function], 'function');
-        test.equal(ntype.Type[RegExp], 'regexp');
-        test.equal(ntype.Type[Boolean], 'boolean');
-        test.equal(ntype.Type[String], 'string');
-        test.equal(ntype.Type[Number], 'number');
-        test.end();
-    });
 
     test.test("type", function (test) {
         var type = ntype.type;
